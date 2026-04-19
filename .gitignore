@@ -23,6 +23,9 @@ publish/
 ## Docker volumes (local)
 data/
 
+## Don't ignore source Data folder
+!src/InventoryAPI/Data/
+
 ## OS
 .DS_Store
 Thumbs.db
