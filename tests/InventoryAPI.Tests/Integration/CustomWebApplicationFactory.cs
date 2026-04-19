@@ -9,11 +9,12 @@ namespace InventoryAPI.Tests.Integration;
 
 /// <summary>
 /// Custom WebApplicationFactory that configures Testing environment with InMemory DB.
+/// Uses a unique static database name to ensure data persists across requests.
 /// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    // Shared database name for all requests from this factory instance
-    private readonly string _dbName = $"TestDb_{Guid.NewGuid()}";
+    // Static database name shared across all requests from this factory instance
+    private static string _dbName = $"TestDb_{Guid.NewGuid()}";
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
