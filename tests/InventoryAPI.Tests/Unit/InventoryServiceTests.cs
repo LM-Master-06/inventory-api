@@ -120,8 +120,8 @@ public class InventoryServiceTests : IDisposable
     [Fact]
     public async Task SearchAsync_ReturnsMatchingItems_ByPartialName()
     {
-        await SeedItemAsync(name: "Blue Widget", sku: "BW-001");
-        await SeedItemAsync(name: "Red Gadget",  sku: "RG-001");
+        await SeedItemAsync(name: "Blue Widget", sku: "BW-001", category: "BlueCategory");
+        await SeedItemAsync(name: "Red Gadget",  sku: "RG-001", category: "RedCategory");
 
         var results = await _sut.SearchAsync("widget");
 
