@@ -319,7 +319,7 @@ pipeline {
                 anyOf {
                     branch 'main'
                     branch 'master'
-                    branch 'HEAD'
+                    expression { env.BRANCH_NAME == null }  // Allow in detached HEAD state
                 }
             }
             steps {
