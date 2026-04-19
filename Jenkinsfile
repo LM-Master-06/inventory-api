@@ -142,18 +142,25 @@ pipeline {
         stage('Code Quality') {
             environment {
                 SONAR_TOKEN = credentials('sonarqube-token')
+                SONAR_SCANNER_PATH = "${WORKSPACE}/.tools"
             }
             steps {
                 echo "── [CODE QUALITY] Running SonarQube analysis ──"
 
+                // Install SonarScanner to a local known path
+                sh '''
+                    mkdir -p ${SONAR_SCANNER_PATH}
+                    # Install locally (not globally) so we know exactly where it is
+                    dotnet tool install dotnet-sonarscanner \
+                        --version 5.15.0 \
+                        --tool-path ${SONAR_SCANNER_PATH} 2>/dev/null || true
+                    # List what we have for debugging
+                    ls -la ${SONAR_SCANNER_PATH}/ || echo "Tool path check"
+                '''
+
                 withSonarQubeEnv('SonarQube') {
                     sh '''
-                        # Install SonarScanner tool if not present
-                        dotnet tool install --global dotnet-sonarscanner \
-                            --version 5.15.0 2>/dev/null || true
-                        export PATH="$PATH:$HOME/.dotnet/tools"
-
-                        dotnet sonarscanner begin \
+                        ${SONAR_SCANNER_PATH}/dotnet-sonarscanner begin \
                             /k:"${SONAR_PROJECT}" \
                             /n:"Inventory Management API" \
                             /v:"${BUILD_VERSION}" \
@@ -167,7 +174,8 @@ pipeline {
                         dotnet build src/InventoryAPI/InventoryAPI.csproj \
                             --configuration Release --no-restore
 
-                        dotnet sonarscanner end /d:sonar.login="${SONAR_TOKEN}"
+                        ${SONAR_SCANNER_PATH}/dotnet-sonarscanner end \
+                            /d:sonar.login="${SONAR_TOKEN}"
                     '''
                 }
             }
