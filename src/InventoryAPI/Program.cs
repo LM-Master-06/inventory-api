@@ -25,9 +25,8 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // Database: Only use SQLite if not in Testing environment
-// Integration tests set ASPNETCORE_ENVIRONMENT=Testing to use InMemory DB
-var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-if (env != "Testing")
+// Integration tests use WebApplicationFactory with Testing environment
+if (!builder.Environment.IsEnvironment("Testing"))
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlite(
