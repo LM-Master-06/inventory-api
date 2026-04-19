@@ -18,6 +18,7 @@ pipeline {
         PROD_PORT       = '8082'
         DOTNET_CLI_HOME = '/tmp/.dotnet'
         DOTNET_NOLOGO   = 'true'
+        PATH            = "/usr/local/bin:/usr/local/share/dotnet:/opt/homebrew/bin:${env.PATH}"
     }
 
     // ── Options ─────────────────────────────────────────────────────────────
