@@ -17,7 +17,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "REST API for managing product inventory — SIT223/SIT753 HD Task"
     });
     c.IncludeXmlComments(Path.Combine(
-        AppContext.BaseDirectory, "InventoryAPI.xml"), skipUnresolved: true);
+        AppContext.BaseDirectory, "InventoryAPI.xml"));
 });
 
 builder.Services.AddDbContext<AppDbContext>(options =>
