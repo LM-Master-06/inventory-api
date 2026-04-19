@@ -2,24 +2,29 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using InventoryAPI.Data;
 
 namespace InventoryAPI.Tests.Integration;
 
 /// <summary>
 /// Custom WebApplicationFactory that configures InMemory database before Program.cs runs.
-/// This ensures SQLite is never registered, preventing the dual provider error.
+/// Uses ConfigureHostConfiguration to inject services early in the pipeline.
 /// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    protected override IHost CreateHost(IHostBuilder builder)
     {
-        // ConfigureServices runs BEFORE Program.cs, so we can register InMemory DB first
+        // Configure services BEFORE the host is built
+        // This runs before Program.cs and allows us to set up InMemory DB
         builder.ConfigureServices(services =>
         {
-            // Register InMemory provider - Program.cs will see this and skip SQLite
+            // Register InMemory provider - Program.cs will skip SQLite because
+            // DbContextOptions<AppDbContext> is already registered
             services.AddDbContext<AppDbContext>(options =>
                 options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}"));
         });
+
+        return base.CreateHost(builder);
     }
 }
