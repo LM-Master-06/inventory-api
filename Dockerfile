@@ -1,7 +1,7 @@
 # ──────────────────────────────────────────────
 # Stage 1: Restore & Build
 # ──────────────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
 # Copy project files first for layer-caching of restore
@@ -18,7 +18,7 @@ RUN dotnet publish src/InventoryAPI/InventoryAPI.csproj \
 # ──────────────────────────────────────────────
 # Stage 2: Runtime image (minimal footprint)
 # ──────────────────────────────────────────────
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS runtime
 WORKDIR /app
 
 # Create non-root user for security

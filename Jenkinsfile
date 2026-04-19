@@ -122,15 +122,9 @@ pipeline {
             }
             post {
                 always {
-                    junit testResults: 'TestResults/**/*.trx', allowEmptyResults: false
-                    publishHTML([
-                        allowMissing         : false,
-                        alwaysLinkToLastBuild: true,
-                        keepAll              : true,
-                        reportDir            : 'TestResults',
-                        reportFiles          : 'coverage.opencover.xml',
-                        reportName           : 'Code Coverage Report'
-                    ])
+                    junit testResults: 'TestResults/**/*.trx', allowEmptyResults: true
+                    // HTML Publisher plugin not installed - coverage report in artifacts
+                    archiveArtifacts artifacts: 'TestResults/**/*', allowEmptyArchive: true
                     echo "📊 Test results published."
                 }
                 failure {
@@ -457,11 +451,6 @@ pipeline {
     post {
         always {
             echo "── Pipeline finished: build ${BUILD_VERSION} ──"
-            // Clean workspace to free disk space
-            cleanWs(cleanWhenNotBuilt: false,
-                    deleteDirs:        true,
-                    disableDeferredWipeout: true,
-                    notFailBuild:      true)
         }
 
         success {
@@ -472,14 +461,24 @@ pipeline {
             //     body:    "Build v${BUILD_VERSION} completed successfully.\n\n${BUILD_URL}",
             //     to:      'devops-team@example.com'
             // )
+            // Clean workspace to free disk space
+            cleanWs(cleanWhenNotBuilt: false,
+                    deleteDirs:        true,
+                    disableDeferredWipeout: true,
+                    notFailBuild:      true)
         }
 
         failure {
             echo "❌ Pipeline FAILED on build ${BUILD_VERSION} — rolling back deployments."
             sh '''
-                docker-compose -f docker-compose.prod.yml    down --remove-orphans || true
-                docker-compose -f docker-compose.staging.yml down --remove-orphans || true
+                docker-compose -f ${WORKSPACE}/docker-compose.prod.yml    down --remove-orphans || true
+                docker-compose -f ${WORKSPACE}/docker-compose.staging.yml down --remove-orphans || true
             '''
+            // Clean workspace to free disk space
+            cleanWs(cleanWhenNotBuilt: false,
+                    deleteDirs:        true,
+                    disableDeferredWipeout: true,
+                    notFailBuild:      true)
             // Uncomment to send email on failure:
             // emailext(
             //     subject: "❌ [${APP_NAME}] Build #${BUILD_NUMBER} FAILED",
