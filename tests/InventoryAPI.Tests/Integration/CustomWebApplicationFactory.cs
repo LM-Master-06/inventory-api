@@ -19,13 +19,17 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
     }
 
+    // Shared database name for all requests from this factory instance
+    private readonly string _dbName = $"TestDb_{Guid.NewGuid()}";
+
     protected override IHost CreateHost(IHostBuilder builder)
     {
         // Register InMemory database for testing
+        // Uses instance field so all requests share the same database
         builder.ConfigureServices(services =>
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}"));
+                options.UseInMemoryDatabase(_dbName));
         });
 
         return base.CreateHost(builder);
