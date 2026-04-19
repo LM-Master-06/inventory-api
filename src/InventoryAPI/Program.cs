@@ -16,14 +16,23 @@ builder.Services.AddSwaggerGen(c =>
         Version     = "v1",
         Description = "REST API for managing product inventory — SIT223/SIT753 HD Task"
     });
-    c.IncludeXmlComments(Path.Combine(
-        AppContext.BaseDirectory, "InventoryAPI.xml"));
+    // Include XML comments if file exists (may not exist in test environment)
+    var xmlFile = Path.Combine(AppContext.BaseDirectory, "InventoryAPI.xml");
+    if (File.Exists(xmlFile))
+    {
+        c.IncludeXmlComments(xmlFile);
+    }
 });
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(
-        builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? "Data Source=/data/inventory.db"));
+// Database: Only register if DbContext hasn't been registered already
+// (allows tests to override with InMemory database)
+if (!builder.Services.Any(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>)))
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlite(
+            builder.Configuration.GetConnectionString("DefaultConnection")
+            ?? "Data Source=/data/inventory.db"));
+}
 
 builder.Services.AddScoped<IInventoryService, InventoryService>();
 
@@ -51,11 +60,14 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 app.MapMetrics("/metrics"); // Prometheus scrape endpoint
 
-// Auto-apply migrations / seed on startup
+// Auto-apply migrations / seed on startup (only for relational databases)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.EnsureCreated();
+    if (db.Database.IsRelational())
+    {
+        db.Database.EnsureCreated();
+    }
 }
 
 app.Run();

@@ -4,6 +4,7 @@ using FluentAssertions;
 using InventoryAPI.Data;
 using InventoryAPI.Models;
 using InventoryAPI.Models.DTOs;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,16 +25,15 @@ public class InventoryApiIntegrationTests : IClassFixture<WebApplicationFactory<
     {
         _client = factory.WithWebHostBuilder(builder =>
         {
+            // Configure services - runs before host is built
+            // We register InMemory DB here, and Program.cs will skip SQLite
+            // because DbContextOptions<AppDbContext> is already registered
             builder.ConfigureServices(services =>
             {
-                // Replace SQLite with InMemory for integration tests
-                var descriptor = services.SingleOrDefault(
-                    d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-                if (descriptor is not null)
-                    services.Remove(descriptor);
-
-                services.AddDbContext<AppDbContext>(opt =>
-                    opt.UseInMemoryDatabase("IntegrationTestDb_" + Guid.NewGuid()));
+                // Register InMemory provider with a unique database name per test run
+                // This must be done BEFORE Program.cs runs to prevent SQLite registration
+                services.AddDbContext<AppDbContext>(options =>
+                    options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}"));
             });
         }).CreateClient();
     }
