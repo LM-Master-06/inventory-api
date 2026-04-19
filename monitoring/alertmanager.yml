@@ -1,0 +1,28 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by:        ['alertname', 'env']
+  group_wait:      30s
+  group_interval:  5m
+  repeat_interval: 1h
+  receiver: 'email-alerts'
+
+receivers:
+  - name: 'email-alerts'
+    email_configs:
+      - to:            'devops-team@example.com'
+        from:          'alertmanager@example.com'
+        smarthost:     'smtp.example.com:587'
+        auth_username: 'alertmanager@example.com'
+        auth_password: 'YOUR_SMTP_PASSWORD'
+        send_resolved: true
+        headers:
+          Subject: '[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }} — Inventory API'
+
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'env']

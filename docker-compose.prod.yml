@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  inventory-api-prod:
+    image: inventory-api:prod-${BUILD_VERSION:-latest}
+    container_name: inventory-api-prod
+    restart: always
+    ports:
+      - "8082:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Data Source=/data/inventory-prod.db
+    volumes:
+      - inventory-prod-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+    labels:
+      - "env=production"
+      - "version=${BUILD_VERSION:-latest}"
+
+volumes:
+  inventory-prod-data:

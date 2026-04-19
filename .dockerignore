@@ -1,0 +1,16 @@
+**/.git
+**/.gitignore
+**/bin
+**/obj
+**/*.user
+**/*.suo
+.vs
+.vscode
+**/TestResults
+**/*.db
+**/node_modules
+**/coverage*
+README.md
+docker-compose*.yml
+Jenkinsfile
+monitoring/

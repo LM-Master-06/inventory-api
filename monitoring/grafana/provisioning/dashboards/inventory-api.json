@@ -1,0 +1,98 @@
+{
+  "uid": "inventory-api-dashboard",
+  "title": "Inventory API — Overview",
+  "tags": ["inventory", "api", "dotnet"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Requests / sec (prod)",
+      "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "sum(rate(http_requests_received_total{job='inventory-api-prod'}[1m]))",
+        "legendFormat": "req/s"
+      }],
+      "options": { "colorMode": "background", "graphMode": "area" }
+    },
+    {
+      "id": 2, "type": "stat", "title": "Error Rate (prod)",
+      "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "sum(rate(http_requests_received_total{job='inventory-api-prod',code=~'5..'}[5m])) / sum(rate(http_requests_received_total{job='inventory-api-prod'}[5m])) * 100",
+        "legendFormat": "error %"
+      }],
+      "options": {
+        "colorMode": "background",
+        "thresholds": {
+          "steps": [
+            { "color": "green", "value": null },
+            { "color": "orange", "value": 1 },
+            { "color": "red", "value": 5 }
+          ]
+        }
+      }
+    },
+    {
+      "id": 3, "type": "stat", "title": "P95 Latency (prod)",
+      "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job='inventory-api-prod'}[5m]))",
+        "legendFormat": "p95 latency"
+      }],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "id": 4, "type": "stat", "title": "In-Flight Requests (prod)",
+      "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+      "targets": [{
+        "expr": "http_requests_in_progress{job='inventory-api-prod'}",
+        "legendFormat": "in-flight"
+      }]
+    },
+    {
+      "id": 5, "type": "timeseries", "title": "Request Rate — Prod vs Staging",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_received_total{job='inventory-api-prod'}[1m]))",
+          "legendFormat": "prod"
+        },
+        {
+          "expr": "sum(rate(http_requests_received_total{job='inventory-api-staging'}[1m]))",
+          "legendFormat": "staging"
+        }
+      ]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "HTTP Status Breakdown (prod)",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "targets": [
+        {
+          "expr": "sum by (code) (rate(http_requests_received_total{job='inventory-api-prod'}[1m]))",
+          "legendFormat": "HTTP {{code}}"
+        }
+      ]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Latency Percentiles (prod)",
+      "gridPos": { "x": 0, "y": 12, "w": 24, "h": 8 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job='inventory-api-prod'}[5m]))",
+          "legendFormat": "p50"
+        },
+        {
+          "expr": "histogram_quantile(0.90, rate(http_request_duration_seconds_bucket{job='inventory-api-prod'}[5m]))",
+          "legendFormat": "p90"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job='inventory-api-prod'}[5m]))",
+          "legendFormat": "p99"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    }
+  ]
+}

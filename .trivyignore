@@ -1,0 +1,6 @@
+# .trivyignore
+# List CVE IDs here that are accepted/false-positives with justification.
+# Format: CVE-YYYY-NNNNN  # comment
+
+# Example (remove if not applicable):
+# CVE-2023-XXXXX  # not exploitable — no user input reaches affected code path

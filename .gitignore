@@ -1,0 +1,28 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.vscode/
+
+## Test output
+TestResults/
+coverage*/
+*.trx
+*.opencover.xml
+
+## Databases
+*.db
+*.db-shm
+*.db-wal
+
+## Published output
+publish/
+
+## Docker volumes (local)
+data/
+
+## OS
+.DS_Store
+Thumbs.db

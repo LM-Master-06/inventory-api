@@ -1,0 +1,52 @@
+groups:
+  - name: inventory-api-alerts
+    interval: 30s
+    rules:
+
+      # ── Availability ────────────────────────────────────────────────────
+      - alert: ServiceDown
+        expr: up{job=~"inventory-api.*"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary:     "Inventory API is DOWN ({{ $labels.env }})"
+          description: "The inventory API on {{ $labels.instance }} has been unreachable for > 1 minute."
+
+      # ── Error Rate ──────────────────────────────────────────────────────
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(http_requests_received_total{job=~"inventory-api.*", code=~"5.."}[5m])
+            /
+            rate(http_requests_received_total{job=~"inventory-api.*"}[5m])
+          ) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary:     "High HTTP error rate on Inventory API ({{ $labels.env }})"
+          description: "Error rate is {{ humanizePercentage $value }} over the last 5 minutes."
+
+      # ── Latency ─────────────────────────────────────────────────────────
+      - alert: SlowResponseTime
+        expr: |
+          histogram_quantile(0.95,
+            rate(http_request_duration_seconds_bucket{job=~"inventory-api.*"}[5m])
+          ) > 1.0
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary:     "Slow P95 response time on Inventory API ({{ $labels.env }})"
+          description: "P95 latency is {{ humanizeDuration $value }} — threshold is 1s."
+
+      # ── In-flight requests spike ─────────────────────────────────────────
+      - alert: HighInflightRequests
+        expr: http_requests_in_progress{job=~"inventory-api.*"} > 50
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary:     "Too many in-flight requests ({{ $labels.env }})"
+          description: "{{ $value }} concurrent requests in progress."

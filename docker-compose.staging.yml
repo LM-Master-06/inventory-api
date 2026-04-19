@@ -1,0 +1,26 @@
+version: "3.9"
+
+services:
+  inventory-api-staging:
+    image: inventory-api:${BUILD_VERSION:-latest}
+    container_name: inventory-api-staging
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Staging
+      - ConnectionStrings__DefaultConnection=Data Source=/data/inventory-staging.db
+    volumes:
+      - inventory-staging-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    labels:
+      - "env=staging"
+      - "version=${BUILD_VERSION:-latest}"
+
+volumes:
+  inventory-staging-data:
