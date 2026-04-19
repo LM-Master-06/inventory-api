@@ -12,13 +12,16 @@ namespace InventoryAPI.Tests.Integration;
 /// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
+    // Static constructor runs before any instance is created
+    // This ensures the environment is set BEFORE Program.cs executes
+    static CustomWebApplicationFactory()
+    {
+        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
+    }
+
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        // Set environment to Testing BEFORE building the host
-        // This causes Program.cs to skip SQLite registration
-        builder.UseEnvironment("Testing");
-
-        // Register InMemory database
+        // Register InMemory database for testing
         builder.ConfigureServices(services =>
         {
             services.AddDbContext<AppDbContext>(options =>
