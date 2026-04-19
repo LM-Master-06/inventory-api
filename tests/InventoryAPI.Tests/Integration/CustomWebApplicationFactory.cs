@@ -12,20 +12,15 @@ namespace InventoryAPI.Tests.Integration;
 /// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
-    // Static constructor runs before any instance is created
-    // This ensures the environment is set BEFORE Program.cs executes
-    static CustomWebApplicationFactory()
-    {
-        Environment.SetEnvironmentVariable("ASPNETCORE_ENVIRONMENT", "Testing");
-    }
-
     // Shared database name for all requests from this factory instance
     private readonly string _dbName = $"TestDb_{Guid.NewGuid()}";
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
+        // Set environment to Testing BEFORE building
+        builder.UseEnvironment("Testing");
+
         // Register InMemory database for testing
-        // Uses instance field so all requests share the same database
         builder.ConfigureServices(services =>
         {
             services.AddDbContext<AppDbContext>(options =>
