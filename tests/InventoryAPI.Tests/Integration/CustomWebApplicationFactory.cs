@@ -8,19 +8,19 @@ using InventoryAPI.Data;
 namespace InventoryAPI.Tests.Integration;
 
 /// <summary>
-/// Custom WebApplicationFactory that configures InMemory database before Program.cs runs.
-/// Uses ConfigureHostConfiguration to inject services early in the pipeline.
+/// Custom WebApplicationFactory that configures Testing environment with InMemory DB.
 /// </summary>
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     protected override IHost CreateHost(IHostBuilder builder)
     {
-        // Configure services BEFORE the host is built
-        // This runs before Program.cs and allows us to set up InMemory DB
+        // Set environment to Testing BEFORE building the host
+        // This causes Program.cs to skip SQLite registration
+        builder.UseEnvironment("Testing");
+
+        // Register InMemory database
         builder.ConfigureServices(services =>
         {
-            // Register InMemory provider - Program.cs will skip SQLite because
-            // DbContextOptions<AppDbContext> is already registered
             services.AddDbContext<AppDbContext>(options =>
                 options.UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}"));
         });

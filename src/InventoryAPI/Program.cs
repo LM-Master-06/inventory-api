@@ -24,9 +24,10 @@ builder.Services.AddSwaggerGen(c =>
     }
 });
 
-// Database: Only register if DbContext hasn't been registered already
-// (allows tests to override with InMemory database)
-if (!builder.Services.Any(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>)))
+// Database: Only use SQLite if not in Testing environment
+// Integration tests set ASPNETCORE_ENVIRONMENT=Testing to use InMemory DB
+var env = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+if (env != "Testing")
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseSqlite(
