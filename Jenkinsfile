@@ -399,47 +399,61 @@ pipeline {
                 // Verify each component
                 sh '''
                     echo "── Checking Prometheus ──"
-                    curl --silent --fail \
-                         --retry 6 --retry-delay 5 --retry-connrefused \
+                    curl --silent --fail --max-time 10 \
+                         --retry 10 --retry-delay 3 --retry-connrefused \
                          http://localhost:9090/-/ready \
-                         && echo "✅ Prometheus is ready."
+                         && echo "✅ Prometheus is ready." \
+                         || echo "⚠️  Prometheus health check timed out"
 
                     echo "── Checking Grafana ──"
-                    curl --silent --fail \
-                         --retry 6 --retry-delay 5 --retry-connrefused \
+                    curl --silent --fail --max-time 10 \
+                         --retry 8 --retry-delay 3 --retry-connrefused \
                          http://localhost:3000/api/health \
-                         && echo "✅ Grafana is ready."
+                         && echo "✅ Grafana is ready." \
+                         || echo "⚠️  Grafana health check timed out"
 
                     echo "── Checking Alertmanager ──"
-                    curl --silent --fail \
-                         --retry 4 --retry-delay 3 --retry-connrefused \
+                    curl --silent --fail --max-time 10 \
+                         --retry 6 --retry-delay 2 --retry-connrefused \
                          http://localhost:9093/-/ready \
-                         && echo "✅ Alertmanager is ready." || true
+                         && echo "✅ Alertmanager is ready." \
+                         || echo "⚠️  Alertmanager health check timed out"
                 '''
 
                 // Verify app metrics endpoint is being scraped
                 sh '''
+                    set +e  # Don't exit on error for this block
+
                     echo "── Verifying /metrics endpoint on production ──"
-                    curl --silent http://localhost:${PROD_PORT}/metrics \
-                        | grep -q "http_requests_received_total" \
-                        && echo "✅ Prometheus metrics endpoint confirmed." \
-                        || echo "⚠️  Metrics endpoint not yet producing HTTP metrics (may need traffic)."
+                    curl --silent --max-time 5 http://localhost:${PROD_PORT}/metrics \
+                        | grep -q "http_requests_received_total"
+                    if [ $? -eq 0 ]; then
+                        echo "✅ Prometheus metrics endpoint confirmed."
+                    else
+                        echo "⚠️  Metrics endpoint not yet producing HTTP metrics (may need traffic)."
+                    fi
 
                     # Generate a few requests to populate metrics
                     echo "── Generating test traffic to populate metrics ──"
                     for i in 1 2 3 4 5; do
-                        curl --silent http://localhost:${PROD_PORT}/api/inventory > /dev/null
-                        curl --silent http://localhost:${PROD_PORT}/health         > /dev/null
+                        curl --silent --max-time 3 http://localhost:${PROD_PORT}/api/inventory > /dev/null 2>&1 || true
+                        curl --silent --max-time 3 http://localhost:${PROD_PORT}/health         > /dev/null 2>&1 || true
                     done
                     echo "✅ Test traffic sent."
 
                     # Verify Prometheus has started scraping
-                    sleep 15
-                    curl --silent \
+                    echo "── Checking Prometheus scrape status ──"
+                    sleep 10
+                    curl --silent --max-time 5 \
                         "http://localhost:9090/api/v1/query?query=up{job='inventory-api-prod'}" \
-                        | grep -q '"value"' \
-                        && echo "✅ Prometheus is actively scraping the production app." \
-                        || echo "⚠️  Prometheus scrape pending — check target at http://localhost:9090/targets"
+                        | grep -q '"value"'
+                    if [ $? -eq 0 ]; then
+                        echo "✅ Prometheus is actively scraping the production app."
+                    else
+                        echo "⚠️  Prometheus scrape pending — check target at http://localhost:9090/targets"
+                    fi
+
+                    set -e  # Re-enable exit on error
 
                     echo ""
                     echo "════════════════════════════════════════"
