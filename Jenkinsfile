@@ -26,7 +26,6 @@ pipeline {
         timeout(time: 45, unit: 'MINUTES')
         disableConcurrentBuilds()
         timestamps()
-        ansiColor('xterm')
     }
 
     // ── SCM Polling trigger ─────────────────────────────────────────────────
